@@ -8,13 +8,15 @@ import mjolnir from "../../resources/img/mjolnir.png";
 class RandomChar extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      char: {},
+      loading: true,
+      error: false,
+    };
+  }
+  componentDidMount() {
     this.updateChar();
   }
-  state = {
-    char: {},
-    loading: true,
-    error: false,
-  };
   marvelService = new MarvelService();
 
   onCharLoaded = (char) => {
@@ -26,6 +28,7 @@ class RandomChar extends Component {
 
   updateChar = () => {
     const id = Math.floor(Math.random() * (1011400 - 1011000) + 1011000);
+    this.setState({ loading: true });
     this.marvelService
       .getCharacter(id)
       .then(this.onCharLoaded)
@@ -49,7 +52,7 @@ class RandomChar extends Component {
             Do you want to get to know him better?
           </p>
           <p className="randomchar__title">Or choose another one</p>
-          <button className="button button__main">
+          <button className="button button__main" onClick={this.updateChar}>
             <div className="inner">try it</div>
           </button>
           <img src={mjolnir} alt="mjolnir" className="randomchar__decoration" />
@@ -64,10 +67,22 @@ const View = ({ char }) => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + "...";
   };
+
   const { name, description, thumbnail, wiki, homepage } = char;
   return (
     <div className="randomchar__block">
-      <img src={thumbnail} alt="Random character" className="randomchar__img" />
+      <img
+        src={thumbnail}
+        alt="Random character"
+        className="randomchar__img"
+        style={{
+          objectFit:
+            thumbnail ===
+            "http://i.annihil.us/u/prod/marvel/i/mg/b/40/image_not_available.jpg"
+              ? "contain"
+              : "cover",
+        }}
+      />
       <div className="randomchar__info">
         <p className="randomchar__name">{name}</p>
         <p className="randomchar__descr">{truncateText(description, 150)}</p>
