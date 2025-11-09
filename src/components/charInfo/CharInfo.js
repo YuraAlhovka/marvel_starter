@@ -1,31 +1,29 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import ErrorMessage from "../errorMessage/ErrorMessage";
 import Spinner from "../spinner/Spinner";
 import Skeleton from "../skeleton/Skeleton";
 import "./charInfo.scss";
-import MarvelService from "../../services/MarvelService";
+import useMarvelService from "../../services/MarvelService";
 import PropTypes from "prop-types";
 
 const CharInfo = (props) => {
   const [char, setChar] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-  const prevCharIdRef = useRef();
   const { charId } = props;
+  const prevCharIdRef = useRef();
 
-  const marvelService = new MarvelService();
+  const { loading, error, getCharacter, clearError } = useMarvelService();
 
-  const updateChar = useCallback(() => {
+  const updateChar = () => {
     if (!charId) {
       return;
     }
-    onCharLoading();
-    marvelService.getCharacter(charId).then(onCharLoaded).catch(onError);
-  }, [charId, marvelService]);
+    clearError();
+    getCharacter(charId).then(onCharLoaded);
+  };
 
   useEffect(() => {
     updateChar();
-  }, []);
+  }, [props.charId]);
 
   useEffect(() => {
     if (prevCharIdRef.current !== charId) {
@@ -34,17 +32,8 @@ const CharInfo = (props) => {
     prevCharIdRef.current = charId;
   }, [charId, updateChar]);
 
-  const onCharLoading = () => {
-    setLoading(true);
-  };
-
   const onCharLoaded = (char) => {
     setChar(char);
-    setLoading(false);
-  };
-  const onError = () => {
-    setLoading(false);
-    setError(true);
   };
 
   const skeleton = char || error || loading ? null : <Skeleton />;
