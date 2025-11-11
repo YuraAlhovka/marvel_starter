@@ -20,9 +20,9 @@ const AppHeader = () => {
               Characters
             </NavLink>
           </li>
-          /
+
           <li>
-            <NavLink end style={activeStyle} to="/comics">
+            <NavLink style={activeStyle} to="/comics">
               Comics
             </NavLink>
           </li>
