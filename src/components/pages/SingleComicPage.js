@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
+import Page404 from "./404";
 import ErrorMessage from "../errorMessage/ErrorMessage";
 import Spinner from "../spinner/Spinner";
 import useMarvelService from "../../services/MarvelService";
@@ -9,6 +10,7 @@ const SingleComicPage = () => {
   const { comicId } = useParams();
   const [comic, setComic] = useState(null);
   const { loading, error, getComic, clearError } = useMarvelService();
+
   const updateComic = () => {
     clearError();
     getComic(comicId).then(onComicLoaded);
@@ -17,6 +19,10 @@ const SingleComicPage = () => {
   useEffect(() => {
     updateComic();
   }, [comicId]);
+
+  if (!comicId || !/^\d+$/.test(comicId)) {
+    return <Page404 />;
+  }
 
   const onComicLoaded = (comic) => {
     setComic(comic);
