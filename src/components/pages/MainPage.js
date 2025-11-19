@@ -5,6 +5,7 @@ import CharList from "../charList/CharList";
 import CharInfo from "../charInfo/CharInfo";
 import CharSearchForm from "../charSearchForm/CharSearchForm";
 import ErrorBoundary from "../errorBoundary/ErrorBoundary";
+import { Helmet } from "react-helmet";
 
 import decoration from "../../resources/img/vision.png";
 
@@ -17,6 +18,13 @@ const MainPage = () => {
 
   return (
     <>
+      <Helmet>
+        <meta
+          name="description"
+          content="Explore Marvel Universe characters and comics. Find information about your favorite heroes and stories."
+        />
+        <title>Marvel Information Portal - Characters & Comics</title>
+      </Helmet>
       <ErrorBoundary>
         <RandomChar />
       </ErrorBoundary>
