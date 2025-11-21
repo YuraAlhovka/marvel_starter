@@ -1,29 +1,51 @@
-// components/charList/CharList.js
 import { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 
-import Spinner from "../spinner/Spinner";
-import ErrorMessage from "../errorMessage/ErrorMessage";
 import useMarvelService from "../../services/MarvelService";
+import ErrorMessage from "../errorMessage/ErrorMessage";
+import Spinner from "../spinner/Spinner";
+
 import "./charList.scss";
 
+const setContent = (process, Component, newItemLoading) => {
+  switch (process) {
+    case "waiting":
+      return <Spinner />;
+    case "loading":
+      return newItemLoading ? <Component /> : <Spinner />;
+    case "confirmed":
+      return <Component />;
+    case "error":
+      return <ErrorMessage />;
+    default:
+      throw new Error("Unexpected process state");
+  }
+};
 const CharList = (props) => {
   const [charList, setCharList] = useState([]);
   const [newItemLoading, setNewItemLoading] = useState(false);
   const [offset, setOffset] = useState(0);
   const [charEnded, setCharEnded] = useState(false);
+  const scrollPositionRef = useRef(0);
 
-  const { loading, error, getAllCharacters } = useMarvelService();
+  const { getAllCharacters, process, setProcess } = useMarvelService();
 
   useEffect(() => {
     onRequest(offset, true);
   }, []);
 
+  const handleLoadMore = () => {
+    // Сохраняем позицию скролла в момент клика
+    scrollPositionRef.current =
+      window.pageYOffset || document.documentElement.scrollTop;
+    onRequest(offset, false);
+  };
+
   const onRequest = (offset, initial) => {
     initial ? setNewItemLoading(false) : setNewItemLoading(true);
     getAllCharacters(offset)
       .then(onCharListLoaded)
-      .catch(() => setNewItemLoading(false));
+      .then(() => setProcess("confirmed"));
   };
 
   const onCharListLoaded = (newCharList) => {
@@ -36,6 +58,11 @@ const CharList = (props) => {
     setNewItemLoading(false);
     setOffset((offset) => offset + 9);
     setCharEnded(ended);
+
+    // Восстанавливаем позицию после обновления DOM
+    requestAnimationFrame(() => {
+      window.scrollTo(0, scrollPositionRef.current);
+    });
   };
   const itemRefs = useRef([]);
 
@@ -64,7 +91,7 @@ const CharList = (props) => {
             props.onCharSelected(item.id);
             focusOnItem(i);
           }}
-          onKeyPress={(e) => {
+          onKeyDown={(e) => {
             if (e.key === " " || e.key === "Enter") {
               props.onCharSelected(item.id);
               focusOnItem(i);
@@ -88,26 +115,22 @@ const CharList = (props) => {
     return <ul className="char__grid">{items}</ul>;
   }
 
-  const items = renderItems(charList);
-
-  const errorMessage = error ? <ErrorMessage /> : null;
-  const spinner = loading && !newItemLoading ? <Spinner /> : null;
-
   return (
     <div className="char__list">
-      {errorMessage}
-      {spinner}
-      {items}
-      <button
-        className="button button__main button__long"
-        disabled={newItemLoading}
-        style={{ display: charEnded ? "none" : "block" }}
-        onClick={() => onRequest(offset)}
-      >
-        <div className="inner">
-          {newItemLoading ? "Loading..." : "Load more"}
-        </div>
-      </button>
+      {setContent(process, () => renderItems(charList), newItemLoading)}
+
+      <div className="char__list-button">
+        <button
+          className="button button__main button__long"
+          disabled={newItemLoading}
+          style={{ display: charEnded ? "none" : "block" }}
+          onClick={handleLoadMore}
+        >
+          <div className="inner">
+            {newItemLoading ? "Loading..." : "Load more"}
+          </div>
+        </button>
+      </div>
     </div>
   );
 };

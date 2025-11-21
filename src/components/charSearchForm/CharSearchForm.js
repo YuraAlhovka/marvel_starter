@@ -3,15 +3,31 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as Yup from "yup";
 import { Link } from "react-router-dom";
-
 import useMarvelService from "../../services/MarvelService";
-import ErrorMessage from "../errorMessage/ErrorMessage";
 
 import "./charSearchForm.scss";
 
+const setContent = (process, content, data) => {
+  switch (process) {
+    case "waiting":
+      return null; // Не показываем скелетон при ожидании
+    case "loading":
+      return;
+    case "confirmed":
+      return data ? content : null;
+    case "error":
+      return (
+        <div className="char__search-error">Error occurred while searching</div>
+      );
+    default:
+      throw new Error("Unexpected process state");
+  }
+};
+
 const CharSearchForm = () => {
   const [char, setChar] = useState(null);
-  const { loading, error, getCharacterByName, clearError } = useMarvelService();
+  const { getCharacterByName, clearError, process, setProcess } =
+    useMarvelService();
 
   const validationSchema = Yup.object({
     charName: Yup.string().required("This field is required"),
@@ -36,19 +52,17 @@ const CharSearchForm = () => {
 
   const updateChar = (name) => {
     clearError();
-    getCharacterByName(name).then(onCharLoaded);
+    setChar(null);
+    getCharacterByName(name)
+      .then(onCharLoaded)
+      .then(() => setProcess("confirmed"))
+      .catch(() => setProcess("error"));
   };
 
   const onSubmit = (data) => {
     updateChar(data.charName);
     reset();
   };
-
-  const errorMessage = error ? (
-    <div className="char__search-critical-error">
-      <ErrorMessage />
-    </div>
-  ) : null;
 
   const results = !char ? null : char.length > 0 ? (
     <div className="char__search-wrapper">
@@ -85,7 +99,7 @@ const CharSearchForm = () => {
           <button
             type="submit"
             className="button button__main"
-            disabled={loading || !isValid}
+            disabled={process === "loading" || !isValid}
           >
             <div className="inner">find</div>
           </button>
@@ -94,8 +108,7 @@ const CharSearchForm = () => {
           <div className="char__search-error">{errors.charName.message}</div>
         )}
       </form>
-      {results}
-      {errorMessage}
+      {setContent(process, results, char)}
     </div>
   );
 };
