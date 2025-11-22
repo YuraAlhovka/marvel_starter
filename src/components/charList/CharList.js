@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import PropTypes from "prop-types";
 
 import useMarvelService from "../../services/MarvelService";
@@ -32,6 +32,7 @@ const CharList = (props) => {
 
   useEffect(() => {
     onRequest(offset, true);
+    // eslint-disable-next-line
   }, []);
 
   const handleLoadMore = () => {
@@ -114,10 +115,13 @@ const CharList = (props) => {
 
     return <ul className="char__grid">{items}</ul>;
   }
-
+  const elements = useMemo(() => {
+    return setContent(process, () => renderItems(charList), newItemLoading);
+    // eslint-disable-next-line
+  }, [process]);
   return (
     <div className="char__list">
-      {setContent(process, () => renderItems(charList), newItemLoading)}
+      {elements}
 
       <div className="char__list-button">
         <button
